@@ -4,15 +4,15 @@ import spock.lang.Unroll
 class VendingMachineTest extends Specification {
 
     @Unroll
-    def '#b 円を投入すると #a 円が返ってくる'() {
+    def '#b 円を投入すると #exp 円が返ってくる'() {
         setup:
         def vendingMachine = new VendingMachine()
 
         expect:
-        a == vendingMachine.receive(b)
+        exp == vendingMachine.receive(b)
 
         where:
-        a     | b
+        exp     | b
         10000 | 10000
         5000  | 5000
         2000  | 2000
@@ -26,16 +26,16 @@ class VendingMachineTest extends Specification {
     }
 
     @Unroll
-    def "#b 円投入した状態で払い戻しを行うと #a 円が返ってくる"() {
+    def "#b 円投入した状態で払い戻しを行うと #exp 円が返ってくる"() {
         setup:
         def vendingMachine = new VendingMachine()
         vendingMachine.receive(b)
 
         expect:
-        a == vendingMachine.payBack()
+        exp == vendingMachine.payBack()
 
         where:
-        a    | b
+        exp    | b
         1000 | 1000
         500  | 500
 
@@ -48,10 +48,9 @@ class VendingMachineTest extends Specification {
         when:
         vendingMachine.receive(100)
         vendingMachine.receive(10)
-        def a = vendingMachine.payBack()
 
         then:
-        a == 110
+        110 == vendingMachine.payBack()
 
 
     }
@@ -59,9 +58,9 @@ class VendingMachineTest extends Specification {
     def "払い戻しをしたあとに再度払い戻しをすると0が返却される"() {
         setup:
         def vendingMachine = new VendingMachine()
+        vendingMachine.receive(100)
 
         when:
-        vendingMachine.receive(100)
         vendingMachine.payBack()
 
         then:
@@ -69,7 +68,8 @@ class VendingMachineTest extends Specification {
 
     }
 
-    def "汎用的に合計金額を取得する"() {
+    @Unroll
+    def "#b 円に合計金額を取得する"() {
         setup:
         def vendingMachine = new VendingMachine()
         b.each {
@@ -77,10 +77,10 @@ class VendingMachineTest extends Specification {
         }
 
         expect:
-        a == vendingMachine.total
+        exp == vendingMachine.total
 
         where:
-        a    | b
+        exp    | b
         110  | [10, 100]
         1200 | [1000, 100, 50, 50]
         100  | [100, 1]
@@ -101,11 +101,11 @@ class VendingMachineTest extends Specification {
         def vendingMachine = new VendingMachine()
 
         expect:
-        5 == vendingMachine.stock("コーラ")
+        5 == vendingMachine.getStock("コーラ")
 
     }
 
-    def "ジュースをの値段を取得する"() {
+    def "ジュースの値段を取得する"() {
         setup:
         def vendingMachine = new VendingMachine()
 
@@ -115,4 +115,87 @@ class VendingMachineTest extends Specification {
         then:
         price == 120
     }
+
+    @Unroll
+    def "#b 円 投入した状態でコーラが購入できるかどうかを返す"() {
+        setup:
+        def vendingMachine = new VendingMachine()
+        b.each {
+            vendingMachine.receive(it)
+        }
+
+        expect:
+        exp == vendingMachine.canBuy("コーラ")
+
+        where:
+        exp     | b
+        true  | [100, 10, 10]
+        false | [100]
+
+    }
+
+    def "ジュースを購入するとジュースを返す"() {
+        setup:
+        def vendingMachine = new VendingMachine()
+
+
+        when:
+        vendingMachine.receive(100)
+        vendingMachine.receive(10)
+        vendingMachine.receive(10)
+        def juice = vendingMachine.buy("コーラ")
+
+        then:
+        juice.name == "コーラ"
+    }
+
+    def "ジュースを購入した後のつり銭を返す"() {
+        setup:
+        def vendingMachine = new VendingMachine()
+
+
+        when:
+        buyCola(vendingMachine)
+
+        then:
+        0 == vendingMachine.payBack()
+    }
+
+    def "ジュースを購入すると在庫が減る"() {
+        setup:
+        def vendingMachine = new VendingMachine()
+
+
+        when:
+        buyCola(vendingMachine)
+
+        then:
+        4 == vendingMachine.getStock("コーラ")
+    }
+
+    def "在庫切れの状態で購入すると null を返す"() {
+        setup:
+        def vendingMachine = new VendingMachine()
+        5.times {
+            buyCola(vendingMachine)
+        }
+
+        when:
+        vendingMachine.receive(100)
+        vendingMachine.receive(10)
+        vendingMachine.receive(10)
+
+
+        then:
+        null == vendingMachine.buy("コーラ")
+    }
+
+
+    void buyCola(def vendingMachine) {
+        vendingMachine.receive(100)
+        vendingMachine.receive(10)
+        vendingMachine.receive(10)
+        vendingMachine.buy("コーラ")
+    }
+
 }
