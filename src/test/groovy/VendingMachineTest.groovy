@@ -86,7 +86,33 @@ class VendingMachineTest extends Specification {
         100  | [100, 1]
     }
 
-//    def "ジュースを格納する"(){
-//
-//    }
+    def "ジュースを格納する"() {
+        setup:
+        def vendingMachine = new VendingMachine()
+        def juice = new Juice("コーラ")
+
+        expect:
+        vendingMachine.store(juice)
+
+    }
+
+    def "ジュースの在庫を取得する"() {
+        setup:
+        def vendingMachine = new VendingMachine()
+
+        expect:
+        5 == vendingMachine.stock("コーラ")
+
+    }
+
+    def "ジュースをの値段を取得する"() {
+        setup:
+        def vendingMachine = new VendingMachine()
+
+        when:
+        def price = vendingMachine.getPrice("コーラ")
+
+        then:
+        price == 120
+    }
 }
